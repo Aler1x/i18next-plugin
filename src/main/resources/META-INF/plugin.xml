@@ -1,15 +1,19 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.aler1x.i18nextplugin</id>
-    <name>i18next-plugin</name>
-    <vendor>aler1x</vendor>
+    <id>dev.alerix.plugins.i18n</id>
+    <name>I18next Inline Hints</name>
+    <vendor>Alerix</vendor>
 
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <depends>JavaScript</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.aler1x.i18nextplugin.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.aler1x.i18nextplugin.startup.MyProjectActivity" />
+        <applicationConfigurable
+            id="i18n.settings"
+            displayName="I18next Inlay Hints"
+            implementationClass="com.alerix.i18n.I18nSettingsConfigurable" />
+        <codeInsight.inlayProvider
+            language="TypeScript"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
     </extensions>
 </idea-plugin>
