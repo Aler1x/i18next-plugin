@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.template
+package com.github.aler1x.i18nextplugin
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
