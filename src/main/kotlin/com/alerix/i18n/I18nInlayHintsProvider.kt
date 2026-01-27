@@ -40,8 +40,13 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         val translationService = project.service<I18nTranslationService>()
         val settingsService = service<I18nSettingsService>()
         return object : FactoryInlayHintsCollector(editor) {
+            private val processedOffsets = mutableSetOf<Int>()
+
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 val call = element as? JSCallExpression ?: return true
+                val offset = call.textRange.endOffset
+                if (offset in processedOffsets) return true
+                
                 val callInfo = parseCall(call, settingsService.state) ?: return true
 
                 val inlineLang = settingsService.state.inlineLanguage
@@ -52,11 +57,12 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
                     inlineLang,
                 )
                 if (result != null) {
+                    processedOffsets.add(offset)
                     val (_, inlineValue) = result
                     val text = "i18n[$inlineLang]: ${truncate(inlineValue)}"
                     val presentation = factory.smallText(text)
                     sink.addInlineElement(
-                        call.textRange.endOffset,
+                        offset,
                         true,
                         presentation,
                         false,

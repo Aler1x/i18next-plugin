@@ -1,4 +1,5 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<!-- Plugin Configuration File. Read more:
+https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>dev.alerix.plugins.i18n</id>
     <name>I18next Inline Hints</name>
@@ -14,10 +15,28 @@
             id="com.alerix.i18n.I18nSettingsConfigurable"
             instance="com.alerix.i18n.I18nSettingsConfigurable" />
         <lang.documentationProvider
-            language="ECMAScript 6"
+            language="TypeScript"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="TypeScript JSX"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="JavaScript"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="JSX Harmony"
             implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
         <codeInsight.inlayProvider
-            language="ECMAScript 6"
+            language="TypeScript"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="TypeScript JSX"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="JavaScript"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="JSX Harmony"
             implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
     </extensions>
 </idea-plugin>
