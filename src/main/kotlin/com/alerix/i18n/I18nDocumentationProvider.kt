@@ -22,18 +22,20 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         val lines = mutableListOf<String>()
         lines.add("<html><body>")
         lines.add("<b>i18next Translations</b><br/>")
-        lines.add("<b>Key:</b> ${callInfo.key}<br/>")
-        lines.add("<b>Namespace:</b> ${callInfo.namespace}<br/><br/>")
+        lines.add("<b>Key:</b> ${escapeHtml(callInfo.key)}<br/>")
+        lines.add("<b>Namespaces:</b> ${callInfo.namespaces.joinToString(", ")}<br/><br/>")
 
         for (lang in languages) {
-            val value = translationService.resolveTranslation(
+            val result = translationService.resolveTranslationWithNamespace(
                 settingsService.state,
-                callInfo.namespace,
+                callInfo.namespaces,
                 callInfo.key,
                 lang,
             )
-            val displayValue = if (value != null) {
-                escapeHtml(truncate(value))
+            val displayValue = if (result != null) {
+                val (ns, value) = result
+                val nsIndicator = if (callInfo.namespaces.size > 1) " <i>($ns)</i>" else ""
+                "${escapeHtml(truncate(value))}$nsIndicator"
             } else {
                 "<i>&lt;missing&gt;</i>"
             }
@@ -66,10 +68,13 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         val args = call.arguments
         val firstArg = args.firstOrNull() ?: return null
         val key = parseArrowKey(firstArg.text) ?: return null
-        val namespace = parseNamespace(args.getOrNull(1)?.text)
-            ?: findUseTranslationNamespace(call)
-            ?: settings.defaultNamespace
-        return CallInfo(key, namespace)
+        val explicitNs = parseNamespace(args.getOrNull(1)?.text)
+        val namespaces = if (explicitNs != null) {
+            listOf(explicitNs)
+        } else {
+            findUseTranslationNamespaces(call) ?: listOf(settings.defaultNamespace)
+        }
+        return CallInfo(key, namespaces)
     }
 
     private fun parseArrowKey(text: String): String? {
@@ -123,7 +128,7 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         return match.groupValues[1]
     }
 
-    private fun findUseTranslationNamespace(call: JSCallExpression): String? {
+    private fun findUseTranslationNamespaces(call: JSCallExpression): List<String>? {
         val fileText = call.containingFile.text ?: return null
         val offset = call.textRange.startOffset
         if (offset <= 0) return null
@@ -133,10 +138,20 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         return parseUseTranslationArgs(argsText)
     }
 
-    private fun parseUseTranslationArgs(argsText: String): String? {
+    private fun parseUseTranslationArgs(argsText: String): List<String>? {
         val text = argsText.trim()
+        // Handle array syntax: ['ns1', 'ns2', ...]
+        val arrayMatch = ARRAY_LITERAL_REGEX.find(text)
+        if (arrayMatch != null) {
+            val arrayContent = arrayMatch.groupValues[1]
+            val namespaces = STRING_LITERAL_REGEX.findAll(arrayContent)
+                .map { it.groupValues[1] }
+                .toList()
+            return namespaces.ifEmpty { null }
+        }
+        // Handle single string: 'namespace'
         val match = STRING_LITERAL_REGEX.find(text) ?: return null
-        return match.groupValues[1]
+        return listOf(match.groupValues[1])
     }
 
     private fun parseBracketString(text: String, openIndex: Int): BracketString? {
@@ -186,7 +201,7 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
             .replace("\"", "&quot;")
     }
 
-    private data class CallInfo(val key: String, val namespace: String)
+    private data class CallInfo(val key: String, val namespaces: List<String>)
     private data class BracketString(val value: String, val endIndex: Int)
 
     private companion object {
@@ -203,5 +218,7 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
             )
         private val STRING_LITERAL_REGEX =
             Regex("""['"]([^'"]+)['"]""")
+        private val ARRAY_LITERAL_REGEX =
+            Regex("""\[([^\]]+)]""")
     }
 }

@@ -45,13 +45,14 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
                 val callInfo = parseCall(call, settingsService.state) ?: return true
 
                 val inlineLang = settingsService.state.inlineLanguage
-                val inlineValue = translationService.resolveTranslation(
+                val result = translationService.resolveTranslationWithNamespace(
                     settingsService.state,
-                    callInfo.namespace,
+                    callInfo.namespaces,
                     callInfo.key,
                     inlineLang,
                 )
-                if (inlineValue != null) {
+                if (result != null) {
+                    val (_, inlineValue) = result
                     val text = "i18n[$inlineLang]: ${truncate(inlineValue)}"
                     val presentation = factory.smallText(text)
                     sink.addInlineElement(
@@ -74,10 +75,13 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         val args = call.arguments
         val firstArg = args.firstOrNull() ?: return null
         val key = parseArrowKey(firstArg.text) ?: return null
-        val namespace = parseNamespace(args.getOrNull(1)?.text)
-            ?: findUseTranslationNamespace(call)
-            ?: settings.defaultNamespace
-        return CallInfo(key, namespace)
+        val explicitNs = parseNamespace(args.getOrNull(1)?.text)
+        val namespaces = if (explicitNs != null) {
+            listOf(explicitNs)
+        } else {
+            findUseTranslationNamespaces(call) ?: listOf(settings.defaultNamespace)
+        }
+        return CallInfo(key, namespaces)
     }
 
     private fun parseArrowKey(text: String): String? {
@@ -131,7 +135,7 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         return match.groupValues[1]
     }
 
-    private fun findUseTranslationNamespace(call: JSCallExpression): String? {
+    private fun findUseTranslationNamespaces(call: JSCallExpression): List<String>? {
         val fileText = call.containingFile.text ?: return null
         val offset = call.textRange.startOffset
         if (offset <= 0) return null
@@ -141,10 +145,20 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         return parseUseTranslationArgs(argsText)
     }
 
-    private fun parseUseTranslationArgs(argsText: String): String? {
+    private fun parseUseTranslationArgs(argsText: String): List<String>? {
         val text = argsText.trim()
+        // Handle array syntax: ['ns1', 'ns2', ...]
+        val arrayMatch = ARRAY_LITERAL_REGEX.find(text)
+        if (arrayMatch != null) {
+            val arrayContent = arrayMatch.groupValues[1]
+            val namespaces = STRING_LITERAL_REGEX.findAll(arrayContent)
+                .map { it.groupValues[1] }
+                .toList()
+            return namespaces.ifEmpty { null }
+        }
+        // Handle single string: 'namespace'
         val match = STRING_LITERAL_REGEX.find(text) ?: return null
-        return match.groupValues[1]
+        return listOf(match.groupValues[1])
     }
 
     private fun parseBracketString(text: String, openIndex: Int): BracketString? {
@@ -186,7 +200,7 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         return value.substring(0, max - 3) + "..."
     }
 
-    private data class CallInfo(val key: String, val namespace: String)
+    private data class CallInfo(val key: String, val namespaces: List<String>)
     private data class BracketString(val value: String, val endIndex: Int)
 
     private companion object {
@@ -203,5 +217,7 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
             )
         private val STRING_LITERAL_REGEX =
             Regex("""['"]([^'"]+)['"]""")
+        private val ARRAY_LITERAL_REGEX =
+            Regex("""\[([^\]]+)]""")
     }
 }

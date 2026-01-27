@@ -35,6 +35,22 @@ class I18nTranslationService(private val project: Project) {
         return resolveJsonPath(json, key)
     }
 
+    fun resolveTranslationWithNamespace(
+        settings: I18nSettingsState,
+        namespaces: List<String>,
+        key: String,
+        language: String,
+    ): Pair<String, String>? {
+        for (ns in namespaces) {
+            val json = loadNamespaceJson(settings, ns, language) ?: continue
+            val value = resolveJsonPath(json, key)
+            if (value != null) {
+                return ns to value
+            }
+        }
+        return null
+    }
+
     private fun loadNamespaceJson(
         settings: I18nSettingsState,
         namespace: String,

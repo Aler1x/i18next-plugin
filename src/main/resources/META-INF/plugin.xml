@@ -10,10 +10,32 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable
             id="i18n.settings"
-            displayName="I18next Inline Hints"
-            implementationClass="com.alerix.i18n.I18nSettingsConfigurable" />
+            parentId="Settings.JavaScript"
+            displayName="i18next"
+            instance="com.alerix.i18n.I18nSettingsConfigurable" />
         <lang.documentationProvider
             language="TypeScript"
             implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="TypeScript JSX"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="JavaScript"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <lang.documentationProvider
+            language="JSX Harmony"
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
+        <codeInsight.inlayProvider
+            language="TypeScript"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="TypeScript JSX"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="JavaScript"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+        <codeInsight.inlayProvider
+            language="JSX Harmony"
+            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
     </extensions>
 </idea-plugin>
