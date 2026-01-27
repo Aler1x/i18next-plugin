@@ -1,69 +1,61 @@
 package com.alerix.i18n
 
-import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
-import com.intellij.codeInsight.hints.InlayHintsCollector
-import com.intellij.codeInsight.hints.InlayHintsProvider
-import com.intellij.codeInsight.hints.InlayHintsSink
-import com.intellij.codeInsight.hints.ImmediateConfigurable
-import com.intellij.codeInsight.hints.NoSettings
-import com.intellij.codeInsight.hints.SettingsKey
-import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.javascript.psi.JSCallExpression
-import javax.swing.JComponent
-import javax.swing.JPanel
+import com.intellij.openapi.components.service
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 
-class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
-    override val key: SettingsKey<NoSettings> = SettingsKey("i18n.inlay.hints")
-    override val name: String = "i18next translations"
-    override val previewText: String = "i18next.t(\$ => \$.myKey)"
+class I18nDocumentationProvider : AbstractDocumentationProvider() {
+    override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+        val call = findI18nCall(originalElement) ?: return null
+        val project = element?.project ?: return null
 
-    override fun createSettings(): NoSettings = NoSettings()
+        val settingsService = service<I18nSettingsService>()
+        val translationService = project.service<I18nTranslationService>()
 
-    override fun createConfigurable(settings: NoSettings): ImmediateConfigurable {
-        return object : ImmediateConfigurable {
-            override fun createComponent(listener: com.intellij.codeInsight.hints.ChangeListener): JComponent {
-                return JPanel()
+        val callInfo = parseCall(call, settingsService.state) ?: return null
+        val languages = translationService.listLanguages(settingsService.state)
+
+        if (languages.isEmpty()) return null
+
+        val lines = mutableListOf<String>()
+        lines.add("<html><body>")
+        lines.add("<b>i18next Translations</b><br/>")
+        lines.add("<b>Key:</b> ${callInfo.key}<br/>")
+        lines.add("<b>Namespace:</b> ${callInfo.namespace}<br/><br/>")
+
+        for (lang in languages) {
+            val value = translationService.resolveTranslation(
+                settingsService.state,
+                callInfo.namespace,
+                callInfo.key,
+                lang,
+            )
+            val displayValue = if (value != null) {
+                escapeHtml(truncate(value))
+            } else {
+                "<i>&lt;missing&gt;</i>"
             }
+            lines.add("<b>$lang:</b> $displayValue<br/>")
         }
+
+        lines.add("</body></html>")
+        return lines.joinToString("")
     }
 
-    override fun getCollectorFor(
-        file: PsiFile,
-        editor: Editor,
-        settings: NoSettings,
-        sink: InlayHintsSink,
-    ): InlayHintsCollector {
-        val project = file.project
-        val translationService = project.service<I18nTranslationService>()
-        val settingsService = service<I18nSettingsService>()
-        return object : FactoryInlayHintsCollector(editor) {
-            override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-                val call = element as? JSCallExpression ?: return true
-                val callInfo = parseCall(call, settingsService.state) ?: return true
-
-                val inlineLang = settingsService.state.inlineLanguage
-                val inlineValue = translationService.resolveTranslation(
-                    settingsService.state,
-                    callInfo.namespace,
-                    callInfo.key,
-                    inlineLang,
-                )
-                if (inlineValue != null) {
-                    val text = "i18n[$inlineLang]: ${truncate(inlineValue)}"
-                    val presentation = factory.smallText(text)
-                    sink.addInlineElement(
-                        call.textRange.endOffset,
-                        true,
-                        presentation,
-                        false,
-                    )
+    private fun findI18nCall(element: PsiElement?): JSCallExpression? {
+        var current = element
+        while (current != null) {
+            if (current is JSCallExpression) {
+                val calleeText = current.methodExpression?.text
+                if (calleeText == "t" || calleeText?.endsWith(".t") == true) {
+                    return current
                 }
-                return true
             }
+            current = current.parent
         }
+        return null
     }
 
     private fun parseCall(call: JSCallExpression, settings: I18nSettingsState): CallInfo? {
@@ -181,9 +173,17 @@ class I18nInlayHintsProvider : InlayHintsProvider<NoSettings> {
         return c.isLetterOrDigit() || c == '_' || c == '$'
     }
 
-    private fun truncate(value: String, max: Int = 120): String {
+    private fun truncate(value: String, max: Int = 200): String {
         if (value.length <= max) return value
         return value.substring(0, max - 3) + "..."
+    }
+
+    private fun escapeHtml(text: String): String {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
     }
 
     private data class CallInfo(val key: String, val namespace: String)

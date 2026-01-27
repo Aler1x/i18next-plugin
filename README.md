@@ -1,4 +1,4 @@
-# i18n Plugin
+# I18next Inline Hints
 
 <!-- Plugin description -->
 An IntelliJ Platform Plugin that enhances your internationalization workflow with inline translation hints and real-time translation fetching for i18n/i18next projects.

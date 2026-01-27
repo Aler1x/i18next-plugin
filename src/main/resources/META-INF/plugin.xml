@@ -10,10 +10,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable
             id="i18n.settings"
-            displayName="I18next Inlay Hints"
+            displayName="I18next Inline Hints"
             implementationClass="com.alerix.i18n.I18nSettingsConfigurable" />
-        <codeInsight.inlayProvider
+        <lang.documentationProvider
             language="TypeScript"
-            implementationClass="com.alerix.i18n.I18nInlayHintsProvider" />
+            implementationClass="com.alerix.i18n.I18nDocumentationProvider" />
     </extensions>
 </idea-plugin>
