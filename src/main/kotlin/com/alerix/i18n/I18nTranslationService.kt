@@ -1,5 +1,6 @@
 package com.alerix.i18n
 
+import com.alerix.i18n.settings.I18nSettingsState
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonStringLiteral
@@ -49,6 +50,19 @@ class I18nTranslationService(private val project: Project) {
             }
         }
         return null
+    }
+
+    fun findNamespacesContainingKey(
+        settings: I18nSettingsState,
+        namespaces: List<String>,
+        key: String,
+    ): List<String> {
+        val languages = listLanguages(settings)
+        val firstLang = languages.firstOrNull() ?: return emptyList()
+        return namespaces.filter { ns ->
+            val json = loadNamespaceJson(settings, ns, firstLang) ?: return@filter false
+            resolveJsonPath(json, key) != null
+        }
     }
 
     private fun loadNamespaceJson(

@@ -1,4 +1,4 @@
-package com.alerix.i18n
+package com.alerix.i18n.settings
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service

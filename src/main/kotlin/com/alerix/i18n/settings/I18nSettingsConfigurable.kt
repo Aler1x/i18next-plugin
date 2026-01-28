@@ -1,11 +1,10 @@
-package com.alerix.i18n
+package com.alerix.i18n.settings
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.openapi.components.service
 
 class I18nSettingsConfigurable : BoundConfigurable("I18next Inlay Hints") {
     private val settings = service<I18nSettingsService>()
@@ -27,10 +26,6 @@ class I18nSettingsConfigurable : BoundConfigurable("I18next Inlay Hints") {
                 textField()
                     .bindText(state::inlineLanguage)
                     .comment("Language used for inline hints, e.g. en")
-            }
-            row {
-                checkBox("Show all languages above call")
-                    .bindSelected(state::showAllLanguages)
             }
         }
     }
