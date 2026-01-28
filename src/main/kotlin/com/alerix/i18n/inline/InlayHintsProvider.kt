@@ -79,8 +79,8 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                 if (result != null) {
                     processedOffsets.add(offset)
                     val (_, inlineValue) = result
-                    val text = "i18n[$inlineLang]: ${truncate(inlineValue)}"
-                    val presentation = factory.smallText(text)
+                    val text = truncate(inlineValue)
+                    val presentation = factory.roundWithBackground(factory.smallText(text))
                     sink.addInlineElement(
                         offset,
                         true,
