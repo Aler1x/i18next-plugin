@@ -6,8 +6,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 
-class I18nSettingsConfigurable : BoundConfigurable("I18next Inlay Hints") {
-    private val settings = service<I18nSettingsService>()
+class SettingsConfigurable : BoundConfigurable("I18next Inlay Hints") {
+    private val settings = service<SettingsService>()
 
     override fun createPanel(): DialogPanel {
         val state = settings.state

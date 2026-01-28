@@ -12,22 +12,22 @@ https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
         <applicationConfigurable
             parentId="tools"
             displayName="i18next Inline Hints"
-            id="com.alerix.i18n.settings.I18nSettingsConfigurable"
-            instance="com.alerix.i18n.settings.I18nSettingsConfigurable" />
+            id="com.alerix.i18n.settings.SettingsConfigurable"
+            instance="com.alerix.i18n.settings.SettingsConfigurable" />
         <lang.documentationProvider
             language="TypeScript"
-            implementationClass="com.alerix.i18n.documentation.I18nDocumentationProvider" />
+            implementationClass="com.alerix.i18n.documentation.DocumentationProvider" />
         <lang.documentationProvider
             language="TypeScript JSX"
-            implementationClass="com.alerix.i18n.documentation.I18nDocumentationProvider" />
+            implementationClass="com.alerix.i18n.documentation.DocumentationProvider" />
         <lang.documentationProvider
             language="JavaScript"
-            implementationClass="com.alerix.i18n.documentation.I18nDocumentationProvider" />
+            implementationClass="com.alerix.i18n.documentation.DocumentationProvider" />
         <lang.documentationProvider
             language="JSX Harmony"
-            implementationClass="com.alerix.i18n.documentation.I18nDocumentationProvider" />
+            implementationClass="com.alerix.i18n.documentation.DocumentationProvider" />
         <codeInsight.inlayProvider
             language="JavaScript"
-            implementationClass="com.alerix.i18n.inline.I18nInlayHintsProvider" />
+            implementationClass="com.alerix.i18n.inline.InlayHintsProvider" />
     </extensions>
 </idea-plugin>

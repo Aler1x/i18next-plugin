@@ -1,18 +1,18 @@
 package com.alerix.i18n.documentation
 
-import com.alerix.i18n.I18nCallInfo
-import com.alerix.i18n.I18nCallParser
-import com.alerix.i18n.I18nTranslationService
-import com.alerix.i18n.settings.I18nSettingsService
+import com.alerix.i18n.CallInfo
+import com.alerix.i18n.CallParser
+import com.alerix.i18n.TranslationService
+import com.alerix.i18n.settings.SettingsService
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 
-class I18nDocumentationProvider : AbstractDocumentationProvider() {
+class DocumentationProvider : AbstractDocumentationProvider() {
     override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
         val project = element?.project ?: return null
-        val settingsService = service<I18nSettingsService>()
-        val translationService = project.service<I18nTranslationService>()
+        val settingsService = service<SettingsService>()
+        val translationService = project.service<TranslationService>()
 
         val callInfo = findCallInfo(originalElement, settingsService) ?: return null
         val languages = translationService.listLanguages(settingsService.state)
@@ -41,8 +41,7 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
             )
             val displayValue = if (result != null) {
                 val (ns, value) = result
-                val nsIndicator = if (callInfo.namespaces.size > 1) " <i>($ns)</i>" else ""
-                "${escapeHtml(truncate(value))}$nsIndicator"
+                "${escapeHtml(truncate(value))}"
             } else {
                 "<i>&lt;missing&gt;</i>"
             }
@@ -53,17 +52,17 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         return lines.joinToString("")
     }
 
-    private fun findCallInfo(element: PsiElement?, settingsService: I18nSettingsService): I18nCallInfo? {
+    private fun findCallInfo(element: PsiElement?, settingsService: SettingsService): CallInfo? {
         if (element == null) return null
 
-        val tCall = I18nCallParser.findI18nCall(element)
+        val tCall = CallParser.findI18nCall(element)
         if (tCall != null) {
-            return I18nCallParser.parseCall(tCall, settingsService.state)
+            return CallParser.parseCall(tCall, settingsService.state)
         }
 
-        val transTag = I18nCallParser.findTransComponent(element)
+        val transTag = CallParser.findTransComponent(element)
         if (transTag != null) {
-            return I18nCallParser.parseTransComponent(transTag, settingsService.state)
+            return CallParser.parseTransComponent(transTag, settingsService.state)
         }
 
         return null

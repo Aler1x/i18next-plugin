@@ -1,6 +1,6 @@
 package com.alerix.i18n
 
-import com.alerix.i18n.settings.I18nSettingsState
+import com.alerix.i18n.settings.SettingsState
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonStringLiteral
@@ -13,10 +13,10 @@ import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-class I18nTranslationService(private val project: Project) {
+class TranslationService(private val project: Project) {
     private val cache = ConcurrentHashMap<String, CachedJson>()
 
-    fun listLanguages(settings: I18nSettingsState): List<String> {
+    fun listLanguages(settings: SettingsState): List<String> {
         val baseDir = project.basePath ?: return emptyList()
         val localesDir = Paths.get(baseDir, settings.localesPath).toString()
         val baseVfs = LocalFileSystem.getInstance().findFileByPath(localesDir) ?: return emptyList()
@@ -27,7 +27,7 @@ class I18nTranslationService(private val project: Project) {
     }
 
     fun resolveTranslation(
-        settings: I18nSettingsState,
+        settings: SettingsState,
         namespace: String,
         key: String,
         language: String,
@@ -37,7 +37,7 @@ class I18nTranslationService(private val project: Project) {
     }
 
     fun resolveTranslationWithNamespace(
-        settings: I18nSettingsState,
+        settings: SettingsState,
         namespaces: List<String>,
         key: String,
         language: String,
@@ -53,7 +53,7 @@ class I18nTranslationService(private val project: Project) {
     }
 
     fun findNamespacesContainingKey(
-        settings: I18nSettingsState,
+        settings: SettingsState,
         namespaces: List<String>,
         key: String,
     ): List<String> {
@@ -66,7 +66,7 @@ class I18nTranslationService(private val project: Project) {
     }
 
     private fun loadNamespaceJson(
-        settings: I18nSettingsState,
+        settings: SettingsState,
         namespace: String,
         language: String,
     ): JsonObject? {

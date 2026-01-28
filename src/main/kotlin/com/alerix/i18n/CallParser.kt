@@ -1,18 +1,18 @@
 package com.alerix.i18n
 
-import com.alerix.i18n.settings.I18nSettingsState
+import com.alerix.i18n.settings.SettingsState
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 
-data class I18nCallInfo(
+data class CallInfo(
     val key: String,
     val namespaces: List<String>,
     val textRange: com.intellij.openapi.util.TextRange,
 )
 
-object I18nCallParser {
+object CallParser {
     fun findI18nCall(element: PsiElement?): JSCallExpression? {
         var current = element
         while (current != null) {
@@ -38,7 +38,7 @@ object I18nCallParser {
         return null
     }
 
-    fun parseCall(call: JSCallExpression, settings: I18nSettingsState): I18nCallInfo? {
+    fun parseCall(call: JSCallExpression, settings: SettingsState): CallInfo? {
         val calleeText = call.methodExpression?.text ?: return null
         if (calleeText != "t" && !calleeText.endsWith(".t")) {
             return null
@@ -52,10 +52,10 @@ object I18nCallParser {
         } else {
             findContextNamespaces(call) ?: listOf(settings.defaultNamespace)
         }
-        return I18nCallInfo(key, namespaces, call.textRange)
+        return CallInfo(key, namespaces, call.textRange)
     }
 
-    fun parseTransComponent(tag: XmlTag, settings: I18nSettingsState): I18nCallInfo? {
+    fun parseTransComponent(tag: XmlTag, settings: SettingsState): CallInfo? {
         val i18nKeyAttr = tag.getAttribute("i18nKey") ?: return null
         val rawKey = i18nKeyAttr.value ?: return null
 
@@ -65,7 +65,7 @@ object I18nCallParser {
         } else {
             findContextNamespaces(tag) ?: listOf(settings.defaultNamespace)
         }
-        return I18nCallInfo(key, namespaces, tag.textRange)
+        return CallInfo(key, namespaces, tag.textRange)
     }
 
     private fun parseI18nKeyWithNamespace(rawKey: String): Pair<String, String?> {
@@ -124,8 +124,29 @@ object I18nCallParser {
 
     fun parseNamespace(text: String?): String? {
         if (text == null) return null
-        val match = NS_REGEX.find(text) ?: return null
-        return match.groupValues[1]
+        val trimmed = text.trim()
+        if (!trimmed.startsWith("{")) return null
+
+        // Only match ns: at depth 1 (top level of the options object)
+        var depth = 0
+        var i = 0
+        while (i < trimmed.length) {
+            when (trimmed[i]) {
+                '{', '(', '[' -> depth++
+                '}', ')', ']' -> depth--
+                'n' -> {
+                    if (depth == 1) {
+                        val rest = trimmed.substring(i)
+                        val match = NS_REGEX.matchAt(rest, 0)
+                        if (match != null) {
+                            return match.groupValues[1]
+                        }
+                    }
+                }
+            }
+            i++
+        }
+        return null
     }
 
     fun findContextNamespaces(element: PsiElement): List<String>? {
