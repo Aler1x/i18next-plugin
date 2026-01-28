@@ -133,9 +133,25 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
         val offset = call.textRange.startOffset
         if (offset <= 0) return null
         val prefix = fileText.substring(0, offset.coerceAtMost(fileText.length))
-        val match = USE_TRANSLATION_REGEX.findAll(prefix).lastOrNull() ?: return null
-        val argsText = match.groupValues[1]
-        return parseUseTranslationArgs(argsText)
+        
+        // Try useTranslation(...) pattern first
+        val useTranslationMatch = USE_TRANSLATION_REGEX.findAll(prefix).lastOrNull()
+        if (useTranslationMatch != null) {
+            val result = parseUseTranslationArgs(useTranslationMatch.groupValues[1])
+            if (result != null) return result
+        }
+        
+        // Try TFunction<[...]> type annotation pattern
+        val tFunctionMatch = TFUNCTION_REGEX.findAll(prefix).lastOrNull()
+        if (tFunctionMatch != null) {
+            val arrayContent = tFunctionMatch.groupValues[1]
+            val namespaces = STRING_LITERAL_REGEX.findAll(arrayContent)
+                .map { it.groupValues[1] }
+                .toList()
+            if (namespaces.isNotEmpty()) return namespaces
+        }
+        
+        return null
     }
 
     private fun parseUseTranslationArgs(argsText: String): List<String>? {
@@ -220,5 +236,7 @@ class I18nDocumentationProvider : AbstractDocumentationProvider() {
             Regex("""['"]([^'"]+)['"]""")
         private val ARRAY_LITERAL_REGEX =
             Regex("""\[([^\]]+)]""")
+        private val TFUNCTION_REGEX =
+            Regex("""\bt\s*:\s*TFunction\s*<\s*\[([^\]]+)]""", setOf(RegexOption.IGNORE_CASE))
     }
 }
