@@ -59,6 +59,8 @@ object CallParser {
         val i18nKeyAttr = tag.getAttribute("i18nKey") ?: return null
         val rawKey = i18nKeyAttr.value ?: return null
 
+        if (!isStaticKey(rawKey)) return null
+
         val (key, explicitNs) = parseI18nKeyWithNamespace(rawKey)
         val namespaces = if (explicitNs != null) {
             listOf(explicitNs)
@@ -66,6 +68,12 @@ object CallParser {
             findContextNamespaces(tag) ?: listOf(settings.defaultNamespace)
         }
         return CallInfo(key, namespaces, tag.textRange)
+    }
+
+    private fun isStaticKey(text: String): Boolean {
+        if (text.isEmpty()) return false
+        if (text.startsWith("{") || text.startsWith("$")) return false
+        return !text.any { it in INVALID_KEY_CHARS }
     }
 
     private fun parseI18nKeyWithNamespace(rawKey: String): Pair<String, String?> {
@@ -240,4 +248,5 @@ object CallParser {
         Regex("""\[([^\]]+)]""")
     private val TFUNCTION_REGEX =
         Regex("""\bt\s*:\s*TFunction\s*<\s*\[([^\]]+)]""", setOf(RegexOption.IGNORE_CASE))
+    private val INVALID_KEY_CHARS = setOf('?', '=', '<', '>', '|', '*', '"', '\n', '\r', '\t')
 }

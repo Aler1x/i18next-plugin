@@ -70,6 +70,7 @@ class TranslationService(private val project: Project) {
         namespace: String,
         language: String,
     ): JsonObject? {
+        if (!isValidPathSegment(namespace) || !isValidPathSegment(language)) return null
         val baseDir = project.basePath ?: return null
         val jsonPath = Paths.get(baseDir, settings.localesPath, language, "$namespace.json").toString()
         val vfs = LocalFileSystem.getInstance().findFileByPath(jsonPath) ?: return null
@@ -100,5 +101,16 @@ class TranslationService(private val project: Project) {
         }
     }
 
+    private fun isValidPathSegment(segment: String): Boolean {
+        if (segment.isEmpty() || segment.length > 255) return false
+        return segment.none { it in INVALID_PATH_CHARS }
+    }
+
     private data class CachedJson(val modStamp: Long, val json: JsonObject)
+
+    companion object {
+        private val INVALID_PATH_CHARS = setOf(
+            '/', '\\', ':', '*', '?', '"', '<', '>', '|', '\n', '\r', '\t', '{', '}'
+        )
+    }
 }
