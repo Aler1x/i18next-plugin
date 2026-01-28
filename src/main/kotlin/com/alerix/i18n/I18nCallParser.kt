@@ -2,7 +2,6 @@ package com.alerix.i18n
 
 import com.alerix.i18n.settings.I18nSettingsState
 import com.intellij.lang.javascript.psi.JSCallExpression
-import com.intellij.lang.javascript.psi.ecma6.JSXmlLiteralExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
