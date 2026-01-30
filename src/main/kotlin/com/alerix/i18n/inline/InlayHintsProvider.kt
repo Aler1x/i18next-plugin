@@ -23,7 +23,7 @@ import javax.swing.JPanel
 class InlayHintsProvider : InlayHintsProvider<NoSettings> {
     override val key: SettingsKey<NoSettings> = SettingsKey("i18n.inlay.hints")
     override val name: String = "i18next translations"
-    override val previewText: String = "i18next.t(\$ => \$.myKey)"
+    override val previewText: String = "i18next.t(\$ => \$.myKey) /*<# inline language #>*/"
 
     override fun createSettings(): NoSettings = NoSettings()
 
@@ -82,11 +82,11 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                 processedOffsets.add(offset)
                 val presentation = if (result != null) {
                     val (_, inlineValue) = result
-                    factory.smallText(truncate(inlineValue))
+                    factory.roundWithBackground(factory.smallText(truncate(inlineValue)))
                 } else {
                     factory.roundWithBackground(factory.smallText("[missing]"))
                 }
-                sink.addInlineElement(
+                sink.addBlockElement(
                     offset,
                     true,
                     presentation,
