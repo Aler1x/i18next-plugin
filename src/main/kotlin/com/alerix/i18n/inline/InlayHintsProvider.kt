@@ -23,7 +23,7 @@ import javax.swing.JPanel
 class InlayHintsProvider : InlayHintsProvider<NoSettings> {
     override val key: SettingsKey<NoSettings> = SettingsKey("i18n.inlay.hints")
     override val name: String = "i18next translations"
-    override val previewText: String = "i18next.t(\$ => \$.myKey) /*<# inline language #>*/"
+    override val previewText: String = "i18next.t(\$ => \$.myKey) inline language"
 
     override fun createSettings(): NoSettings = NoSettings()
 
@@ -86,12 +86,11 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                 } else {
                     factory.roundWithBackground(factory.smallText("[missing]"))
                 }
-                sink.addBlockElement(
-                    offset,           // line offset; block is drawn at line start, offset only identifies the line
-                    true,            // relatesToPrecedingText: hint is associated with the code at this offset
-                    true,            // showAbove: draw above the line (false = below)
-                    0,               // priority: lower = higher in stacking when multiple block inlays on same line
+                sink.addInlineElement(
+                    offset,
+                    true,
                     presentation,
+                    true,
                 )
                 return true
             }
