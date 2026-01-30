@@ -90,7 +90,7 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                     offset,
                     true,
                     presentation,
-                    false,
+                    true,
                 )
                 return true
             }
