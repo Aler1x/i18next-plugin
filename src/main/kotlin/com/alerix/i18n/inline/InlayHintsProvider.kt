@@ -82,7 +82,7 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                 processedOffsets.add(offset)
                 val presentation = if (result != null) {
                     val (_, inlineValue) = result
-                    factory.roundWithBackground(factory.smallText(truncate(inlineValue)))
+                    factory.smallText(truncate(inlineValue))
                 } else {
                     factory.roundWithBackground(factory.smallText("[missing]"))
                 }
