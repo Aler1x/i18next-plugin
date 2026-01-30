@@ -201,20 +201,69 @@ object CallParser {
         i++
         i = skipWhitespace(text, i)
         if (i >= text.length) return null
-        val quote = text[i]
-        if (quote != '"' && quote != '\'' && quote != '`') return null
-        i++
-        val start = i
-        while (i < text.length && text[i] != quote) {
-            i++
+        val value: String
+        when (text[i]) {
+            '"', '\'', '`' -> {
+                val quote = text[i]
+                i++
+                val start = i
+                while (i < text.length && text[i] != quote) i++
+                if (i >= text.length) return null
+                value = text.substring(start, i)
+                i++
+            }
+            else -> {
+                val bracketEnd = findMatchingBracketEnd(text, openIndex) ?: return null
+                val keyFromBracket = parseBracketContent(text.substring(i, bracketEnd)) ?: return null
+                return BracketString(keyFromBracket.value, bracketEnd + 1)
+            }
         }
-        if (i >= text.length) return null
-        val value = text.substring(start, i)
-        i++
         i = skipWhitespace(text, i)
         if (i >= text.length || text[i] != ']') return null
         i++
         return BracketString(value, i)
+    }
+
+    private fun parseBracketContent(content: String): BracketString? {
+        val trimmed = content.trim()
+        if (trimmed.isEmpty()) return null
+        val key = when {
+            FUNCTION_KEY_IN_BRACKET_REGEX.containsMatchIn(trimmed) -> {
+                FUNCTION_KEY_IN_BRACKET_REGEX.find(trimmed)?.groupValues?.get(1) ?: return null
+            }
+            trimmed.first() == '"' || trimmed.first() == '\'' || trimmed.first() == '`' -> {
+                val q = trimmed.first()
+                if (trimmed.last() != q) return null
+                trimmed.substring(1, trimmed.length - 1)
+            }
+            else -> trimmed.takeWhile { isIdentChar(it) || it == '.' || it == '-' }.trim().ifEmpty { trimmed }
+        }
+        return BracketString(key, 0)
+    }
+
+    private fun findMatchingBracketEnd(text: String, openBracketIndex: Int): Int? {
+        if (openBracketIndex < 0 || openBracketIndex >= text.length || text[openBracketIndex] != '[') return null
+        var depth = 1
+        var i = openBracketIndex + 1
+        while (i < text.length && depth > 0) {
+            when (text[i]) {
+                '[' -> depth++
+                ']' -> {
+                    depth--
+                    if (depth == 0) return i
+                }
+                '"', '\'', '`' -> {
+                    val q = text[i]
+                    i++
+                    while (i < text.length && text[i] != q) {
+                        if (text[i] == '\\') i++
+                        i++
+                    }
+                }
+            }
+            i++
+        }
+        return null
     }
 
     private fun skipWhitespace(text: String, index: Int): Int {
@@ -236,7 +285,7 @@ object CallParser {
     private val RETURN_REGEX =
         Regex("""\breturn\s+([^;]+);""", setOf(RegexOption.DOT_MATCHES_ALL))
     private val NS_REGEX =
-        Regex("""\bns\s*:\s*['"]([^'"]+)['"]""")
+        Regex("""\bns\s*[:=]\s*['"`]([^'"`]+)['"`]""")
     private val USE_TRANSLATION_REGEX =
         Regex(
             """\b(?:const|let|var)\s*\{[^}]*\bt\b[^}]*}\s*=\s*useTranslation\s*\(([^)]*)\)""",
@@ -249,4 +298,6 @@ object CallParser {
     private val TFUNCTION_REGEX =
         Regex("""\bt\s*:\s*TFunction\s*<\s*\[([^\]]+)]""", setOf(RegexOption.IGNORE_CASE))
     private val INVALID_KEY_CHARS = setOf('?', '=', '<', '>', '|', '*', '"', '\n', '\r', '\t')
+    private val FUNCTION_KEY_IN_BRACKET_REGEX =
+        Regex("""\w+\s*\(\s*['"`]([^'"`]+)['"`]""")
 }

@@ -69,6 +69,9 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                 if (callInfo == null) return true
                 if (offset in processedOffsets) return true
 
+                val caretOffset = editor.caretModel.offset
+                if (caretOffset in callInfo.textRange.startOffset..callInfo.textRange.endOffset) return true
+
                 val inlineLang = settingsService.state.inlineLanguage
                 val result = translationService.resolveTranslationWithNamespace(
                     settingsService.state,
@@ -76,18 +79,19 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                     callInfo.key,
                     inlineLang,
                 )
-                if (result != null) {
-                    processedOffsets.add(offset)
+                processedOffsets.add(offset)
+                val presentation = if (result != null) {
                     val (_, inlineValue) = result
-                    val text = truncate(inlineValue)
-                    val presentation = factory.roundWithBackground(factory.smallText(text))
-                    sink.addInlineElement(
-                        offset,
-                        true,
-                        presentation,
-                        false,
-                    )
+                    factory.roundWithBackground(factory.smallText(truncate(inlineValue)))
+                } else {
+                    factory.roundWithBackground(factory.smallText("[missing]"))
                 }
+                sink.addInlineElement(
+                    offset,
+                    true,
+                    presentation,
+                    false,
+                )
                 return true
             }
         }
