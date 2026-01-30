@@ -87,10 +87,11 @@ class InlayHintsProvider : InlayHintsProvider<NoSettings> {
                     factory.roundWithBackground(factory.smallText("[missing]"))
                 }
                 sink.addBlockElement(
-                    offset,
-                    true,
+                    offset,           // line offset; block is drawn at line start, offset only identifies the line
+                    true,            // relatesToPrecedingText: hint is associated with the code at this offset
+                    true,            // showAbove: draw above the line (false = below)
+                    0,               // priority: lower = higher in stacking when multiple block inlays on same line
                     presentation,
-                    true,
                 )
                 return true
             }
